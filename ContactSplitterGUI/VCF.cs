@@ -147,10 +147,10 @@ namespace VcfApp
                 throw new InvalidDataException($"Invalid name line! -{nameLine}");
             }
 
-            if (string.IsNullOrWhiteSpace(splittedThirdLine[1]) || splittedThirdLine[1] == "")
+            if (string.IsNullOrWhiteSpace(splittedThirdLine[1]))
             {
 
-                fileName = $"Unnamed";
+                fileName = "Unnamed";
                 return fileName;
             }
 
