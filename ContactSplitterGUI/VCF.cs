@@ -50,7 +50,7 @@ namespace VcfApp
         /// <param name="dest">File to check</param>
         private static void ValidateFileExtension(string file)
         {
-            if (Path.GetExtension(file) != ".vcf" && Path.GetExtension(file) != ".vcf")
+            if (Path.GetExtension(file) != ".vcf" && Path.GetExtension(file) != ".vcard")
                 throw new InvalidDataException($"{file} Invalid file type!");
         }
 
