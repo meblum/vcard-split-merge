@@ -14,7 +14,9 @@ namespace VcfApp
 
         /// <summary>
         /// Gets an array of name card paths, reads each file and appends it to the specified file.
-        /// If any of the files are not of name card type, or doesn't exist, an exception is thrown.
+        /// If any of the source files are not of name card type, or doesn't exist, an exception is thrown.
+        /// If the destination path doesn't exist, it's created, if its not of name card type,
+        // an exception is thrown.
         /// </summary>
         /// <param name="sourcePaths">The array of paths</param>
         /// <param name="dest">The destination file</param>
