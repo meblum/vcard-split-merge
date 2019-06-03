@@ -15,7 +15,9 @@ namespace VcfApp
 
         /// <summary>
         /// Gets an array of name card paths, reads each file and appends it to the specified file.
-        /// If any of the files are not of name card type, or doesn't exist, an exception is thrown.
+        /// If any of the source files are not of name card type, or doesn't exist, an exception is thrown.
+        /// If the destination path doesn't exist, it's created, if its not of name card type,
+        // an exception is thrown.
         /// </summary>
         /// <param name="sourcePaths">The array of paths</param>
         /// <param name="dest">The destination file</param>
@@ -51,7 +53,7 @@ namespace VcfApp
         /// <param name="dest">File to check</param>
         private static void ValidateFileExtension(string file)
         {
-            if (Path.GetExtension(file) != ".vcf" && Path.GetExtension(file) != ".vcf")
+            if (Path.GetExtension(file) != ".vcf" && Path.GetExtension(file) != ".vcard")
                 throw new InvalidDataException($"{file} Invalid file type!");
         }
 
