@@ -78,14 +78,13 @@ namespace VcfApp
 
                     cardNumber++;
 
-                    int line = 0;
                     StringBuilder contact = new StringBuilder();
                     string name = "";
 
                     while (true)
                     {
 
-                        line++;
+                        
 
                         string cardLine = sourceFileReader.ReadLine();
 
@@ -93,7 +92,10 @@ namespace VcfApp
                         if (cardLine == "") break;
 
                         contact.Append(cardLine + Environment.NewLine);
-                        if (line == 4)
+
+                        if (cardLine.StartsWith("END")) break;
+
+                        if (cardLine.StartsWith("FN"))
                             //this line contains the name
                             name = ExtractNameFromNameLine(cardLine);
                     }
