@@ -81,27 +81,40 @@ namespace VcfApp
                     StringBuilder contact = new StringBuilder();
                     string name = "";
 
-                    while (true)
+                    while (sourceFileReader.Peek() >= 0)
                     {
 
                         
 
                         string cardLine = sourceFileReader.ReadLine();
 
-                        //break if this line is a contact seperator.
-                        if (cardLine == "") break;
+                        
+                        if (cardLine == "")
+                            //ignore it...
+                            continue;
 
                         contact.Append(cardLine + Environment.NewLine);
 
-                        if (cardLine.StartsWith("END")) break;
+                        
+                        if (cardLine.StartsWith("END"))
+                            //we have a contact, write it and go to next contact
+                            break;
 
                         if (cardLine.StartsWith("FN"))
+                        {
                             //this line contains the name
                             name = ExtractNameFromNameLine(cardLine);
+                        }
+                            
                     }
-
-                    WritingContact?.Invoke(name, cardNumber);
-                    WriteFile(contact.ToString(), name, dest);
+                    //name could be empty string if file ends with empty newline,
+                    //this also means contact is empty.
+                    if (name != "")
+                    {
+                        WritingContact?.Invoke(name, cardNumber);
+                        WriteFile(contact.ToString(), name, dest);
+                    }
+                    
                 }
             }
         }
