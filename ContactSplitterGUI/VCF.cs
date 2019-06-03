@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text;
 
 namespace VcfApp
 {
@@ -76,7 +77,7 @@ namespace VcfApp
                     cardNumber++;
 
                     int line = 0;
-                    string contact = "";
+                    StringBuilder contact = new StringBuilder();
                     string name = "";
 
                     while (true)
@@ -89,14 +90,14 @@ namespace VcfApp
                         //break if this line is a contact seperator.
                         if (cardLine == "") break;
 
-                        contact += cardLine + Environment.NewLine;
+                        contact.Append(cardLine + Environment.NewLine);
                         if (line == 4)
                             //this line contains the name
                             name = ExtractNameFromNameLine(cardLine);
                     }
 
                     WritingContact?.Invoke(name, cardNumber);
-                    WriteFile(contact, name, dest);
+                    WriteFile(contact.ToString(), name, dest);
                 }
             }
         }
