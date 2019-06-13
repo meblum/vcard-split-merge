@@ -1,16 +1,32 @@
+using ContactSplitMergeGUI;
 using System;
 using System.IO;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Threading;
+//using System.Windows.Forms;
 
 namespace VcfApp
 {
-    static class VCF
+    public class FileLocation
     {
 
+    }
+    class VCF
+    {
+        public VCF(string source, string destination, MainWindow window)
+        {
+            this.Source = source; this.Destination = destination; this.window = window;
+        }
+        private string Source { get; }
+        private string Destination { get; }
+        private MainWindow window;
         /// <summary>
         /// Fires when a contact is written
         /// </summary>
-        public static event Action<string, int> WritingContact;
+        //public static event Action<string, int> WritingContact;
 
 
         /// <summary>
@@ -23,7 +39,7 @@ namespace VcfApp
         /// <param name="dest">The destination file</param>
         public static void MergeContacts(string[] sourcePaths, string dest)
         {
-            
+
             foreach (string file in sourcePaths)
             {
                 ValidateFile(file);
@@ -38,7 +54,7 @@ namespace VcfApp
                 foreach (string path in sourcePaths)
                 {
                     cardNumber++;
-                    WritingContact?.Invoke(Path.GetFileName(path), cardNumber);
+                    //WritingContact?.Invoke(Path.GetFileName(path), cardNumber);
 
                     string card = File.ReadAllText(path);
                     writer.Write(card + Environment.NewLine);
@@ -54,7 +70,12 @@ namespace VcfApp
         private static void ValidateFileExtension(string file)
         {
             if (Path.GetExtension(file) != ".vcf" && Path.GetExtension(file) != ".vcard")
-                throw new InvalidDataException($"{file} Invalid file type!");
+
+
+                MessageBox.Show($"{file} Invalid file type!", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
+
+            throw new InvalidDataException($"{file} Invalid file type!");
         }
 
 
@@ -63,12 +84,12 @@ namespace VcfApp
         /// </summary>
         /// <param name="source">Source filr</param>
         /// <param name="dest">Destination directory</param>
-        public static void ExtractContactsAndWriteToFiles(string source, string dest)
+        public void ExtractContactsAndWriteToFiles()
         {
-            ValidateFile(source);
-            ValidateDirectory(dest);
+            ValidateFile(Source);
+            ValidateDirectory(Destination);
 
-            using (StreamReader sourceFileReader = File.OpenText(source))
+            using (StreamReader sourceFileReader = File.OpenText(Source))
             {
 
                 int cardNumber = 0;
@@ -84,39 +105,41 @@ namespace VcfApp
                     while (sourceFileReader.Peek() >= 0)
                     {
 
-                        
-
                         string cardLine = sourceFileReader.ReadLine();
 
-                        
+
                         if (cardLine == "")
                             //ignore it...
                             continue;
 
                         contact.Append(cardLine + Environment.NewLine);
 
-                        
                         if (cardLine.StartsWith("END"))
                             //we have a contact, write it and go to next contact
                             break;
 
-                        if (cardLine.StartsWith("FN"))
+                        else if (cardLine.StartsWith("FN"))
                         {
                             //this line contains the name
                             name = ExtractNameFromNameLine(cardLine);
                         }
-                            
+
                     }
                     //name could be empty string if file ends with empty newline,
                     //this also means contact is empty.
                     if (name != "")
                     {
-                        WritingContact?.Invoke(name, cardNumber);
-                        WriteFile(contact.ToString(), name, dest);
+                        //WritingContact?.Invoke(name, cardNumber);
+                        WriteFile(contact.ToString(), name, Destination);
                     }
-                    
+
                 }
             }
+            
+            window.Dispatcher.Invoke(() => window.doneLbl.Content = "Done!");
+            MessageBox.Show($"{window.contactCounter} contacts succesfully extracted!", "Success!", MessageBoxButton.OK, MessageBoxImage.Information);
+            window.Dispatcher.Invoke(()=> window.BtnClear_Click(this, new RoutedEventArgs()));
+
         }
 
 

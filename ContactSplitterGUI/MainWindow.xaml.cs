@@ -4,7 +4,7 @@ using System.Windows;
 using Microsoft.Win32;
 using VcfApp;
 using Ookii.Dialogs.Wpf;
-
+using System.Threading.Tasks;
 
 namespace ContactSplitMergeGUI
 {
@@ -16,11 +16,11 @@ namespace ContactSplitMergeGUI
         public MainWindow()
         {
             InitializeComponent();
-            VCF.WritingContact += NameCard_WritingContact;
+            //VCF.WritingContact += NameCard_WritingContact;
 
         }
 
-        int contactCounter = 0;
+        public int contactCounter = 0;
         bool? gotSource;
 
         public string SourcePath { get; private set; }
@@ -62,21 +62,16 @@ namespace ContactSplitMergeGUI
             {
                 if (GetDestFolder() == true)
                     destLbl.Content = DestPath;
-                try
-                {
 
-                    VCF.ExtractContactsAndWriteToFiles(SourcePath, DestPath);
-                }
+                VCF cardTool = new VCF(SourcePath, DestPath, this);
+                Task extractorTask = new Task(cardTool.ExtractContactsAndWriteToFiles);
+                extractorTask.Start();
+                //VCF.ExtractContactsAndWriteToFiles(SourcePath, DestPath);
 
-                catch (InvalidDataException f)
-                {
-                    MessageBox.Show(f.Message, "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
-                    return;
-                }
 
-                doneLbl.Content = "Done!";
-                MessageBox.Show($"{contactCounter} contacts succesfully extracted!", "Success!", MessageBoxButton.OK, MessageBoxImage.Information);
-                BtnClear_Click(sender, e);
+
+
+
             }
 
             else if (mergeRadioBtn.IsChecked == true)
@@ -88,7 +83,7 @@ namespace ContactSplitMergeGUI
                 {
                     VCF.MergeContacts(SourcePaths, DestPath);
                 }
-                
+
                 catch (InvalidDataException g)
                 {
                     MessageBox.Show(g.Message, "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -101,6 +96,7 @@ namespace ContactSplitMergeGUI
                 BtnClear_Click(sender, e);
 
             }
+
         }
         private bool? GetSourceFiles()
         {
@@ -160,15 +156,15 @@ namespace ContactSplitMergeGUI
             return result;
         }
 
-        private void NameCard_WritingContact(string name, int number)
-        {
-            contactCounter++;
+        //private void NameCard_WritingContact(string name, int number)
+        //{
+        //    contactCounter++;
 
-            statsLbl.Content = $"{number} Writing {name} to file";
+        //    //statsLbl.Content = $"{number} Writing {name} to file";
 
-        }
+        //}
 
-        private void BtnClear_Click(object sender, RoutedEventArgs e)
+        public void BtnClear_Click(object sender, RoutedEventArgs e)
         {
             Clear();
             spiltRadioBtn.IsChecked = mergeRadioBtn.IsChecked = false;
