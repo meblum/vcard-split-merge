@@ -2,7 +2,7 @@
 using System.IO;
 using System.Windows;
 using Microsoft.Win32;
-using VcfApp;
+using VCF;
 using Ookii.Dialogs.Wpf;
 using System.Threading.Tasks;
 
@@ -16,18 +16,17 @@ namespace ContactSplitMergeGUI
         public MainWindow()
         {
             InitializeComponent();
-            //VCF.WritingContact += NameCard_WritingContact;
 
         }
 
         public int contactCounter = 0;
         bool? gotSource;
 
-        public string SourcePath { get; private set; }
+        private string SourcePath { get; set; }
 
-        public string[] SourcePaths { get; private set; }
+        private string[] SourcePaths { get; set; }
 
-        public string DestPath { get; private set; }
+        private string DestPath { get; set; }
 
         private void Button_Click_Input(object sender, RoutedEventArgs e)
         {
@@ -36,18 +35,13 @@ namespace ContactSplitMergeGUI
             {
                 if (GetSourceFiles() == true)
                     sourceLbl.Content = spiltRadioBtn.IsChecked == true ? SourcePath : SourcePaths.Length + " Contacts selected";
-
             }
-
 
             else
             {
                 MessageBox.Show("Please choose an option.", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-
-
-
 
         private void GoButton_Click(object sender, RoutedEventArgs e)
         {
@@ -62,16 +56,27 @@ namespace ContactSplitMergeGUI
             {
                 if (GetDestFolder() == true)
                     destLbl.Content = DestPath;
+                VCFExtractor extractor;
+                try
+                {
+                   extractor = new VCFExtractor(SourcePath, DestPath);
 
-                VCF cardTool = new VCF(SourcePath, DestPath, this);
-                Task extractorTask = new Task(cardTool.ExtractContactsAndWriteToFiles);
+                }
+                catch(InvalidDataException exception)
+                {
+                    MessageBox.Show(exception.Message, "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+                extractor.OnWritingFile += (contactNumber, fileName) => Dispatcher.Invoke(()=>statsLbl.Content = $"{contactNumber} Extracting {fileName}");
+                extractor.OnExtractDone += (totalContacts, outputLocation) => Dispatcher.Invoke(() =>
+                   {
+                       doneLbl.Content = "Done!";
+                       MessageBox.Show($"{totalContacts} contacts succesfully extracted to {outputLocation}/!", "Success!", MessageBoxButton.OK, MessageBoxImage.Information);
+                       BtnClear_Click(sender, e);
+                   });
+
+                Task extractorTask = new Task(extractor.ExtractToFiles);
                 extractorTask.Start();
-                //VCF.ExtractContactsAndWriteToFiles(SourcePath, DestPath);
-
-
-
-
-
             }
 
             else if (mergeRadioBtn.IsChecked == true)
@@ -81,7 +86,7 @@ namespace ContactSplitMergeGUI
 
                 try
                 {
-                    VCF.MergeContacts(SourcePaths, DestPath);
+                   var merger= new VCFMerger(SourcePaths, DestPath);
                 }
 
                 catch (InvalidDataException g)
@@ -98,6 +103,8 @@ namespace ContactSplitMergeGUI
             }
 
         }
+
+        
         private bool? GetSourceFiles()
         {
             OpenFileDialog fileDialog = new OpenFileDialog

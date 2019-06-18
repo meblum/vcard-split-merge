@@ -81,7 +81,9 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="VCF.cs" />
+    <Compile Include="VCFMerger.cs" />
+    <Compile Include="VCFTools.cs" />
+    <Compile Include="VCFExtractor.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
