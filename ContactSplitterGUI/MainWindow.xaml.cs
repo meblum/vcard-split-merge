@@ -33,7 +33,7 @@ namespace ContactSplitMergeGUI
             if (spiltRadioBtn.IsChecked != mergeRadioBtn.IsChecked)
             {
                 if (GetSourceFiles() == true)
-                    sourceLbl.Content = spiltRadioBtn.IsChecked == true ? SourcePath : SourcePaths.Length + " Contacts selected";
+                    sourceLbl.Content = spiltRadioBtn.IsChecked == true ? SourcePath : SourcePaths.Length + " Files selected";
             }
 
             else
@@ -109,10 +109,10 @@ namespace ContactSplitMergeGUI
             else if (mergeRadioBtn.IsChecked == true)
             {
 
-
+                VCFMerger merger;
                 try
                 {
-                    var merger = new VCFMerger(SourcePaths, DestPath);
+                     merger = new VCFMerger(SourcePaths, DestPath);
                 }
 
                 catch (InvalidDataException g)
@@ -120,11 +120,22 @@ namespace ContactSplitMergeGUI
                     MessageBox.Show(g.Message, "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
+                progressBar.Maximum = merger.SourceFiles.Length;
+                contactsFoundLbl.Content = $"{merger.SourceFiles.Length} contacts selected.";
+                merger.OnWritingContact+= (contactNumber, fileName) => Dispatcher.Invoke(() =>
+                {
+                    progressBar.Value = contactNumber;
+                    statsLbl.Content = $"{contactNumber} Merging {fileName}";
+                });
+                merger.OnMergeDone+=(totalContacts, outputLocation) => Dispatcher.Invoke(() =>
+                {
+                    MessageBox.Show($"{totalContacts} contacts succesfully merged to {outputLocation}", "Success!", MessageBoxButton.OK, MessageBoxImage.Information);
+                    BtnClear_Click(sender, e);
+                });
 
-
-                //doneLbl.Content = "Done!";
-                //MessageBox.Show($"{contactCounter} contacts succesfully merged!", "Success!", MessageBoxButton.OK, MessageBoxImage.Information);
-                //BtnClear_Click(sender, e);
+                Task extractorTask = new Task(merger.MergeContacts);
+                extractorTask.Start();
+                
 
             }
 
@@ -188,14 +199,7 @@ namespace ContactSplitMergeGUI
             return result;
         }
 
-        //private void NameCard_WritingContact(string name, int number)
-        //{
-        //    contactCounter++;
-
-        //    //statsLbl.Content = $"{number} Writing {name} to file";
-
-        //}
-
+        
         public void BtnClear_Click(object sender, RoutedEventArgs e)
         {
             Clear();

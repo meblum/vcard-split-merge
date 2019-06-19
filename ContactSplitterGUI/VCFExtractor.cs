@@ -16,6 +16,7 @@ namespace VCF
         private string SourceFile { get; }
         private string DestinationFolder { get; }
         public int TotalCardsInSource { get; }
+
         public event Action<int, string> OnWritingFile;
         public event Action<int, string> OnExtractDone;
         public int CardNumber { get; private set; }
@@ -26,17 +27,17 @@ namespace VCF
         /// <param name="dest">Destination directory</param>
         public void ExtractToFiles()
         {
-            
+
 
 
             using (StreamReader sourceFileReader = File.OpenText(SourceFile))
             {
+                StringBuilder contact = new StringBuilder();
 
                 while (sourceFileReader.Peek() >= 0)
                 {
 
 
-                    StringBuilder contact = new StringBuilder();
                     string name = "";
 
                     while (sourceFileReader.Peek() >= 0)
@@ -64,10 +65,12 @@ namespace VCF
                     }
                     //name could be empty string if file ends with empty newline,
                     //this also means contact is empty.
-                    if (name != "")
+                    string card = contact.ToString();
+                    if (name != string.Empty && card.StartsWith("BEGIN"))
                     {
                         OnWritingFile?.Invoke(++CardNumber, name);
-                        VCFTools.WriteToFile(contact.ToString(), name, DestinationFolder);
+                        VCFTools.WriteToFile(card, name, DestinationFolder);
+                        contact.Clear();
                     }
 
                 }

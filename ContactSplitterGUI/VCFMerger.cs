@@ -19,7 +19,7 @@ namespace VCF
             VCFTools.ValidateFileExtension(destinationFile);
             this.SourceFiles = sourceFiles; this.DestinationFile = destinationFile;
         }
-        private string[] SourceFiles { get; }
+        public string[] SourceFiles { get; }
         private string DestinationFile { get; }
         /// <summary>
         /// Fires when a contact is written
