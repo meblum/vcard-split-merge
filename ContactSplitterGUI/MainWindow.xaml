@@ -33,14 +33,18 @@
         
         <Label Content="Output:" Foreground="Green"  Margin="10,5" />
         <DockPanel Margin="0" LastChildFill="False">
-            <Label x:Name="destLbl" Margin="10,5"  />
-            
+            <Label x:Name="destLbl" Margin="10,5" DockPanel.Dock="Left" />
+            <Button DockPanel.Dock="Right"
+                    Margin="10,5" Padding="5"
+                    Content="Browse"
+                    Background="Beige"
+                    Click="Button_Click_Output"/>
         </DockPanel>
         <Button x:Name="goButton" Margin="10,40" Content="Choose Option" Padding="5"
                 Background="LightGreen"
                 Click="GoButton_Click" />
         <Label x:Name="contactsFoundLbl" Margin="10,5" />
         <Label x:Name="statsLbl" Margin="10,5"/>
-        <Label x:Name="doneLbl" Margin="10,10,10,3" />
+        <ProgressBar x:Name="progressBar" Minimum="0" Margin="10,5" Height="13"/>
     </StackPanel>
 </Window>

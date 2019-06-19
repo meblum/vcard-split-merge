@@ -11,13 +11,14 @@ namespace VCF
             VCFTools.ValidateFile(sourceFile);
             VCFTools.ValidateDirectory(destinationFolder);
             this.SourceFile = sourceFile; this.DestinationFolder = destinationFolder;
+            TotalCardsInSource = ContactsInSource();
         }
         private string SourceFile { get; }
         private string DestinationFolder { get; }
-
+        public int TotalCardsInSource { get; }
         public event Action<int, string> OnWritingFile;
         public event Action<int, string> OnExtractDone;
-
+        public int CardNumber { get; private set; }
         /// <summary>
         /// Takes a file, reads each contact and writes it to a new file
         /// </summary>
@@ -25,7 +26,7 @@ namespace VCF
         /// <param name="dest">Destination directory</param>
         public void ExtractToFiles()
         {
-            int cardNumber = 0;
+            
 
 
             using (StreamReader sourceFileReader = File.OpenText(SourceFile))
@@ -34,7 +35,6 @@ namespace VCF
                 while (sourceFileReader.Peek() >= 0)
                 {
 
-                    cardNumber++;
 
                     StringBuilder contact = new StringBuilder();
                     string name = "";
@@ -66,13 +66,13 @@ namespace VCF
                     //this also means contact is empty.
                     if (name != "")
                     {
-                        OnWritingFile?.Invoke(cardNumber, name);
+                        OnWritingFile?.Invoke(++CardNumber, name);
                         VCFTools.WriteToFile(contact.ToString(), name, DestinationFolder);
                     }
 
                 }
             }
-            OnExtractDone?.Invoke(cardNumber, DestinationFolder);
+            OnExtractDone?.Invoke(CardNumber, DestinationFolder);
         }
         /// <summary>
         /// Takes the FN line of a contact and returns the name of it.
@@ -99,6 +99,23 @@ namespace VCF
 
             fileName = $"{splittedThirdLine[1]}";
             return fileName;
+        }
+
+        private int ContactsInSource()
+        {
+            int count = 0;
+            using (StreamReader sourceReader = new StreamReader(SourceFile))
+            {
+                string line;
+                while (sourceReader.Peek() >= 0)
+                {
+                    line = sourceReader.ReadLine();
+                    if (line.StartsWith("BEGIN")) count++;
+                }
+
+            }
+            return count;
+
         }
 
     }
