@@ -16,70 +16,44 @@ namespace ContactSplitMergeGUI
         public MainWindow()
         {
             InitializeComponent();
-
+            mergeRadioBtn.IsChecked = true;
         }
 
-
-
-        private string SourcePath { get; set; }
-
-        private string[] SourcePaths { get; set; }
-
-        private string DestPath { get; set; }
+        private VCFExtractorLocations extractorLocations;
+        private VCFMergerLocations mergerLocations;
 
 
         private void Button_Click_Input(object sender, RoutedEventArgs e)
         {
-            if (spiltRadioBtn.IsChecked != mergeRadioBtn.IsChecked)
-            {
-                if (GetSourceFiles() == true)
-                    sourceLbl.Content = spiltRadioBtn.IsChecked == true ? SourcePath : SourcePaths.Length + " Files selected";
-            }
 
-            else
-            {
-                MessageBox.Show("Please choose an option.", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+            if (GetSourceFiles() == true)
+                sourceLbl.Content = spiltRadioBtn.IsChecked == true ? extractorLocations.SourceFile : mergerLocations.SourceFiles.Length + " Contacts selected";
         }
+
 
         private void Button_Click_Output(object sender, RoutedEventArgs e)
         {
-            if (spiltRadioBtn.IsChecked != mergeRadioBtn.IsChecked)
+            if (spiltRadioBtn.IsChecked == true)
             {
-                if (spiltRadioBtn.IsChecked == true)
-                {
-                    if (GetDestFolder() == true)
-                        destLbl.Content = DestPath;
-                }
-                else if (mergeRadioBtn.IsChecked == true)
-                {
-                    if (GetSaveFile() == true)
-                        destLbl.Content = DestPath;
-                }
+                if (GetDestFolder() == true)
+                    destLbl.Content = extractorLocations.DestinationFolder;
             }
-
-            else
+            else if (mergeRadioBtn.IsChecked == true)
             {
-                MessageBox.Show("Please choose an option.", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
+                if (GetSaveFile() == true)
+                    destLbl.Content = mergerLocations.DestinationFile;
             }
         }
+
         private void GoButton_Click(object sender, RoutedEventArgs e)
         {
-            //if (gotSource != true)
-            //{
-            //    MessageBox.Show("Source not selected!", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
-            //    return;
-            //}
-
 
             if (spiltRadioBtn.IsChecked == true)
             {
-                //if (GetDestFolder() == true)
-                //    destLbl.Content = DestPath;
                 VCFExtractor extractor;
                 try
                 {
-                    extractor = new VCFExtractor(SourcePath, DestPath);
+                    extractor = new VCFExtractor(extractorLocations);
 
                 }
                 catch (InvalidDataException exception)
@@ -99,7 +73,7 @@ namespace ContactSplitMergeGUI
                 extractor.OnExtractDone += (totalContacts, outputLocation) => Dispatcher.Invoke(() =>
                    {
                        MessageBox.Show($"{totalContacts} contacts succesfully extracted to {outputLocation}", "Success!", MessageBoxButton.OK, MessageBoxImage.Information);
-                       BtnClear_Click(sender, e);
+                       Clear();
                    });
 
                 Task extractorTask = new Task(extractor.ExtractToFiles);
@@ -112,7 +86,7 @@ namespace ContactSplitMergeGUI
                 VCFMerger merger;
                 try
                 {
-                     merger = new VCFMerger(SourcePaths, DestPath);
+                    merger = new VCFMerger(mergerLocations);
                 }
 
                 catch (InvalidDataException g)
@@ -120,22 +94,22 @@ namespace ContactSplitMergeGUI
                     MessageBox.Show(g.Message, "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
-                progressBar.Maximum = merger.SourceFiles.Length;
-                contactsFoundLbl.Content = $"{merger.SourceFiles.Length} contacts selected.";
-                merger.OnWritingContact+= (contactNumber, fileName) => Dispatcher.Invoke(() =>
-                {
-                    progressBar.Value = contactNumber;
-                    statsLbl.Content = $"{contactNumber} Merging {fileName}";
-                });
-                merger.OnMergeDone+=(totalContacts, outputLocation) => Dispatcher.Invoke(() =>
-                {
-                    MessageBox.Show($"{totalContacts} contacts succesfully merged to {outputLocation}", "Success!", MessageBoxButton.OK, MessageBoxImage.Information);
-                    BtnClear_Click(sender, e);
-                });
+                progressBar.Maximum = merger.TotalCards;
+                contactsFoundLbl.Content = $"{merger.TotalCards} contacts selected.";
+                merger.OnWritingContact += (contactNumber, fileName) => Dispatcher.Invoke(() =>
+                 {
+                     progressBar.Value = contactNumber;
+                     statsLbl.Content = $"{contactNumber} Merging {fileName}";
+                 });
+                merger.OnMergeDone += (totalContacts, outputLocation) => Dispatcher.Invoke(() =>
+                  {
+                      MessageBox.Show($"{totalContacts} contacts succesfully merged to {outputLocation}", "Success!", MessageBoxButton.OK, MessageBoxImage.Information);
+                      Clear();
+                  });
 
                 Task extractorTask = new Task(merger.MergeContacts);
                 extractorTask.Start();
-                
+
 
             }
 
@@ -155,9 +129,9 @@ namespace ContactSplitMergeGUI
             if (result == true)
             {
                 if (mergeRadioBtn.IsChecked == true)
-                    SourcePaths = fileDialog.FileNames;
+                    mergerLocations.SourceFiles = fileDialog.FileNames;
                 else if (spiltRadioBtn.IsChecked == true)
-                    SourcePath = fileDialog.FileName;
+                    extractorLocations.SourceFile = fileDialog.FileName;
 
             }
             return result;
@@ -180,7 +154,7 @@ namespace ContactSplitMergeGUI
             bool? result = dialog.ShowDialog();
 
             if (result == true)
-                DestPath = dialog.FileName;
+                mergerLocations.DestinationFile = dialog.FileName;
             return result;
         }
 
@@ -195,24 +169,15 @@ namespace ContactSplitMergeGUI
             };
             bool? result = dialog.ShowDialog();
             if (result == true)
-                DestPath = dialog.SelectedPath;
+                extractorLocations.DestinationFolder = dialog.SelectedPath;
             return result;
-        }
-
-        
-        public void BtnClear_Click(object sender, RoutedEventArgs e)
-        {
-            Clear();
-            spiltRadioBtn.IsChecked = mergeRadioBtn.IsChecked = false;
-            goButton.Content = "Choose Option";
-
         }
 
 
         private void Clear()
         {
             sourceLbl.Content = statsLbl.Content = contactsFoundLbl.Content = destLbl.Content = null;
-            SourcePath = DestPath = null; SourcePaths = null; progressBar.Value = 0;
+            progressBar.Value = 0;
         }
 
         private void SplitChckBox_Checked(object sender, RoutedEventArgs e)
@@ -220,6 +185,7 @@ namespace ContactSplitMergeGUI
             Clear();
             sourceLbl.Content = "No file selected";
             goButton.Content = "Split";
+            extractorLocations = new VCFExtractorLocations();
         }
 
 
@@ -229,6 +195,7 @@ namespace ContactSplitMergeGUI
             Clear();
             sourceLbl.Content = "0 Contacts selected";
             goButton.Content = "Merge";
+            mergerLocations = new VCFMergerLocations();
         }
 
 

@@ -6,11 +6,18 @@ namespace VCF
 {
     public class VCFExtractor
     {
-        public VCFExtractor(string sourceFile, string destinationFolder)
+        public VCFExtractor(VCFExtractorLocations locations)
         {
-            VCFTools.ValidateFile(sourceFile);
-            VCFTools.ValidateDirectory(destinationFolder);
-            this.SourceFile = sourceFile; this.DestinationFolder = destinationFolder;
+            if (locations.SourceFile == null)
+            {
+                throw new InvalidDataException("Please supply a source file!");
+            }
+            else if (locations.DestinationFolder == null)
+            {
+                throw new InvalidDataException("Please supply a destination folder!");
+            }
+
+            this.SourceFile = locations.SourceFile; this.DestinationFolder = locations.DestinationFolder;
             TotalCardsInSource = ContactsInSource();
         }
         private string SourceFile { get; }

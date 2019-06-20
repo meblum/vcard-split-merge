@@ -7,6 +7,48 @@ using System.Windows.Threading;
 namespace VCF
 {
 
+    public class VCFExtractorLocations
+    {
+
+        private string sourceFile;
+        public string SourceFile
+        {
+            get
+            { return sourceFile; }
+            set { VCFTools.ValidateFile(value); sourceFile = value; }
+        }
+        private string destinationFolder;
+        public string DestinationFolder
+        {
+            get
+            { return destinationFolder; }
+            set { VCFTools.ValidateDirectory(value); destinationFolder = value; }
+        }
+    }
+
+    public class VCFMergerLocations
+    {
+        private string[] sourceFiles;
+        public string[] SourceFiles
+        {
+            get { return sourceFiles; }
+            set
+            {
+                foreach (string file in value)
+                {
+                    VCFTools.ValidateFile(file);
+                }
+                sourceFiles = value;
+            }
+        }
+
+        private string destinationFile;
+        public string DestinationFile
+        {
+            get { return destinationFile; }
+            set { VCFTools.ValidateFileExtension(value); destinationFile = value; }
+        }
+    }
     public static class VCFTools
     {
         /// <summary>

@@ -9,18 +9,21 @@ namespace VCF
 {
     class VCFMerger
     {
-        public VCFMerger(string[] sourceFiles, string destinationFile)
+        public VCFMerger(VCFMergerLocations locations)
         {
-            foreach (string file in sourceFiles)
+            if (locations.SourceFiles == null)
             {
-
-                VCFTools.ValidateFile(file);
+                throw new InvalidDataException("Please choose the source files!");
             }
-            VCFTools.ValidateFileExtension(destinationFile);
-            this.SourceFiles = sourceFiles; this.DestinationFile = destinationFile;
+            else if (locations.DestinationFile == null)
+            {
+                throw new InvalidDataException("Please supply a destination file!");
+            }
+            this.SourceFiles = locations.SourceFiles; this.DestinationFile = locations.DestinationFile;
         }
-        public string[] SourceFiles { get; }
+        private string[] SourceFiles { get; }
         private string DestinationFile { get; }
+        public int TotalCards { get { return SourceFiles.Length; } }
         /// <summary>
         /// Fires when a contact is written
         /// </summary>
@@ -48,7 +51,7 @@ namespace VCF
                 {
                     string card = File.ReadAllText(path);
                     cardNumber++;
-                    OnWritingContact?.Invoke(cardNumber,Path.GetFileName(path));
+                    OnWritingContact?.Invoke(cardNumber, Path.GetFileName(path));
                     writer.Write(card + Environment.NewLine);
                 }
             }
