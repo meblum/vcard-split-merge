@@ -18,12 +18,22 @@ namespace VCF
             }
 
             this.SourceFile = locations.SourceFile; this.DestinationFolder = locations.DestinationFolder;
-            TotalCardsInSource = ContactsInSource();
         }
         private string SourceFile { get; }
         private string DestinationFolder { get; }
-        public int TotalCardsInSource { get; }
 
+        private int totalCards;
+        public int TotalCardsInSource
+        {
+            get
+            {
+                if (totalCards == 0)
+                {
+                    totalCards = ContactsInSource();
+                }
+                return totalCards;
+            }
+        }
         public event Action<int, string> OnWritingFile;
         public event Action<int, string> OnExtractDone;
         public int CardNumber { get; private set; }
@@ -76,7 +86,7 @@ namespace VCF
                     if (name != string.Empty && card.StartsWith("BEGIN"))
                     {
                         OnWritingFile?.Invoke(++CardNumber, name);
-                        VCFTools.WriteToFile(card, name, DestinationFolder);
+                        VCFValidator.WriteToFile(card, name, DestinationFolder);
                         contact.Clear();
                     }
 

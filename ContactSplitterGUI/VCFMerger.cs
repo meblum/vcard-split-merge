@@ -19,11 +19,11 @@ namespace VCF
             {
                 throw new InvalidDataException("Please supply a destination file!");
             }
-            this.SourceFiles = locations.SourceFiles; this.DestinationFile = locations.DestinationFile;
+            SourceFiles = locations.SourceFiles; DestinationFile = locations.DestinationFile;
         }
         private string[] SourceFiles { get; }
         private string DestinationFile { get; }
-        public int TotalCards { get { return SourceFiles.Length; } }
+        public int TotalCards => SourceFiles.Length;
         /// <summary>
         /// Fires when a contact is written
         /// </summary>

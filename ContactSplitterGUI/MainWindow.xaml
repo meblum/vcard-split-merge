@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ContactSplitMergeGUI"
         mc:Ignorable="d"
-        Title="Contact splitter" Width="385" Height="450">
+        Title="Contact tool" Width="385" Height="450">
     <StackPanel Background="Azure">
         <StackPanel Margin="10" Orientation="Horizontal" HorizontalAlignment="Center">
             <RadioButton x:Name="spiltRadioBtn" VerticalAlignment="Center" Margin="5" Content="Split" GroupName="Option" 

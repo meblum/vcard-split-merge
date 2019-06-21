@@ -15,14 +15,14 @@ namespace VCF
         {
             get
             { return sourceFile; }
-            set { VCFTools.ValidateFile(value); sourceFile = value; }
+            set { VCFValidator.ValidateFile(value); sourceFile = value; }
         }
         private string destinationFolder;
         public string DestinationFolder
         {
             get
             { return destinationFolder; }
-            set { VCFTools.ValidateDirectory(value); destinationFolder = value; }
+            set { VCFValidator.ValidateDirectory(value); destinationFolder = value; }
         }
     }
 
@@ -36,7 +36,7 @@ namespace VCF
             {
                 foreach (string file in value)
                 {
-                    VCFTools.ValidateFile(file);
+                    VCFValidator.ValidateFile(file);
                 }
                 sourceFiles = value;
             }
@@ -46,10 +46,10 @@ namespace VCF
         public string DestinationFile
         {
             get { return destinationFile; }
-            set { VCFTools.ValidateFileExtension(value); destinationFile = value; }
+            set { VCFValidator.ValidateFileExtension(value); destinationFile = value; }
         }
     }
-    public static class VCFTools
+    public static class VCFValidator
     {
         /// <summary>
         /// Makes sure file is contact file
