@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace VCF
@@ -27,8 +28,9 @@ namespace VCF
         /// <summary>
         /// Fires when a contact is written
         /// </summary>
-        public event Action<int, string> OnWritingContact;
-        public event Action<int, string> OnMergeDone;
+        public event Action<int, string> WritingContact;
+        public event Action<int, string> MergeDone;
+        public event Action Cancelled;
 
 
         /// <summary>
@@ -39,24 +41,38 @@ namespace VCF
         /// </summary>
         /// <param name="sourcePaths">The array of paths</param>
         /// <param name="dest">The destination file</param>
-        public void MergeContacts()
+        public void MergeContacts(CancellationToken token)
         {
+
+
             int cardNumber = 0;
 
-            using (StreamWriter writer = File.AppendText(DestinationFile))
+            using (StreamWriter writer = new StreamWriter(File.Open(DestinationFile, FileMode.Create)))
             {
 
 
                 foreach (string path in SourceFiles)
                 {
+                    if (token.IsCancellationRequested)
+                    {
+                        break;
+                        
+                    }
+
                     string card = File.ReadAllText(path);
                     cardNumber++;
-                    OnWritingContact?.Invoke(cardNumber, Path.GetFileName(path));
+                    WritingContact?.Invoke(cardNumber, Path.GetFileName(path));
                     writer.Write(card + Environment.NewLine);
                 }
             }
-
-            OnMergeDone?.Invoke(cardNumber, DestinationFile);
+            if (token.IsCancellationRequested)
+            {
+                FileInfo file = new FileInfo(DestinationFile);
+                file.Delete();
+                Cancelled?.Invoke();
+                throw new OperationCanceledException(token);
+            }else
+            MergeDone?.Invoke(cardNumber, DestinationFile);
         }
 
     }

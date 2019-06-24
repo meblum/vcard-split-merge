@@ -5,6 +5,7 @@ using Microsoft.Win32;
 using VCF;
 using Ookii.Dialogs.Wpf;
 using System.Threading.Tasks;
+using System.Threading;
 
 namespace ContactSplitMergeGUI
 {
@@ -16,12 +17,15 @@ namespace ContactSplitMergeGUI
         public MainWindow()
         {
             InitializeComponent();
+            Closing += MainWindow_Closing;
             mergeRadioBtn.IsChecked = true;
         }
 
+
+        private bool isRunning = false;
         private VCFExtractorLocations extractorLocations;
         private VCFMergerLocations mergerLocations;
-
+        private CancellationTokenSource tokenSource;
 
         private void Button_Click_Input(object sender, RoutedEventArgs e)
         {
@@ -64,19 +68,30 @@ namespace ContactSplitMergeGUI
                 progressBar.Maximum = extractor.TotalCardsInSource;
                 contactsFoundLbl.Content = $"{extractor.TotalCardsInSource} Contacts found!";
 
-                extractor.OnWritingFile += (contactNumber, fileName) => Dispatcher.Invoke(() =>
+                extractor.WritingFile += (contactNumber, fileName) => Dispatcher.Invoke(() =>
                 {
                     progressBar.Value = contactNumber;
                     statsLbl.Content = $"{contactNumber} Extracting {fileName}";
                 });
 
-                extractor.OnExtractDone += (totalContacts, outputLocation) => Dispatcher.Invoke(() =>
+                extractor.ExtractDone += (totalContacts, outputLocation) => Dispatcher.Invoke(() =>
                    {
                        MessageBox.Show($"{totalContacts} contacts succesfully extracted to {outputLocation}", "Success!", MessageBoxButton.OK, MessageBoxImage.Information);
                        Clear();
                    });
 
-                Task extractorTask = new Task(extractor.ExtractToFiles);
+
+                extractor.Cancelled += () => Dispatcher.Invoke(() =>
+                  {
+                      MessageBox.Show("Extract cancelled!", "Cancelled!", MessageBoxButton.OK, MessageBoxImage.Information);
+                      Clear();
+                  });
+
+                tokenSource = new CancellationTokenSource();
+                btnCancel.Visibility = Visibility.Visible;
+                isRunning = true;
+                Task extractorTask = new Task((token) => extractor.ExtractToFiles((CancellationToken)token), tokenSource.Token);
+
                 extractorTask.Start();
             }
 
@@ -96,18 +111,27 @@ namespace ContactSplitMergeGUI
                 }
                 progressBar.Maximum = merger.TotalCards;
                 contactsFoundLbl.Content = $"{merger.TotalCards} contacts selected.";
-                merger.OnWritingContact += (contactNumber, fileName) => Dispatcher.Invoke(() =>
+                merger.WritingContact += (contactNumber, fileName) => Dispatcher.Invoke(() =>
                  {
                      progressBar.Value = contactNumber;
                      statsLbl.Content = $"{contactNumber} Merging {fileName}";
                  });
-                merger.OnMergeDone += (totalContacts, outputLocation) => Dispatcher.Invoke(() =>
+                merger.MergeDone += (totalContacts, outputLocation) => Dispatcher.Invoke(() =>
                   {
                       MessageBox.Show($"{totalContacts} contacts succesfully merged to {outputLocation}", "Success!", MessageBoxButton.OK, MessageBoxImage.Information);
                       Clear();
                   });
 
-                Task extractorTask = new Task(merger.MergeContacts);
+                merger.Cancelled += () => Dispatcher.Invoke(() =>
+                {
+                    MessageBox.Show("Merge cancelled!", "Cancelled!", MessageBoxButton.OK, MessageBoxImage.Information);
+                    Clear();
+                });
+
+                tokenSource = new CancellationTokenSource();
+                btnCancel.Visibility = Visibility.Visible;
+                isRunning = true;
+                Task extractorTask = new Task((token)=>merger.MergeContacts((CancellationToken)token),tokenSource.Token);
                 extractorTask.Start();
 
 
@@ -177,7 +201,8 @@ namespace ContactSplitMergeGUI
         private void Clear()
         {
             sourceLbl.Content = statsLbl.Content = contactsFoundLbl.Content = destLbl.Content = null;
-            progressBar.Value = 0;
+            progressBar.Value = 0; isRunning = false;
+            btnCancel.Visibility = Visibility.Hidden;
         }
 
         private void SplitChckBox_Checked(object sender, RoutedEventArgs e)
@@ -198,6 +223,31 @@ namespace ContactSplitMergeGUI
             mergerLocations = new VCFMergerLocations();
         }
 
+        private void BtnCancel_Click(object sender, RoutedEventArgs e)
+        {
+            
+            MessageBoxResult result = MessageBox.Show("This will cancel all running operationsAre you sure you want to cancel?", "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            if (result == MessageBoxResult.Yes)
+            {
 
+                tokenSource.Cancel();
+                tokenSource.Dispose();
+            }
+
+        }
+        private void MainWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            if (isRunning)
+            {
+                MessageBoxResult result =
+                            MessageBox.Show("Are you sure you wanna exit? this will abort all running tasks!", "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                if (result == MessageBoxResult.No)
+                {
+                    e.Cancel = true;
+                }
+            }
+            
+            
+        }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Text;
+using System.Threading;
 
 namespace VCF
 {
@@ -17,7 +18,7 @@ namespace VCF
                 throw new InvalidDataException("Please supply a destination folder!");
             }
 
-            this.SourceFile = locations.SourceFile; this.DestinationFolder = locations.DestinationFolder;
+            SourceFile = locations.SourceFile; DestinationFolder = locations.DestinationFolder;
         }
         private string SourceFile { get; }
         private string DestinationFolder { get; }
@@ -34,15 +35,16 @@ namespace VCF
                 return totalCards;
             }
         }
-        public event Action<int, string> OnWritingFile;
-        public event Action<int, string> OnExtractDone;
+        public event Action<int, string> WritingFile;
+        public event Action<int, string> ExtractDone;
+        public event Action Cancelled;
         public int CardNumber { get; private set; }
         /// <summary>
         /// Takes a file, reads each contact and writes it to a new file
         /// </summary>
         /// <param name="source">Source filr</param>
         /// <param name="dest">Destination directory</param>
-        public void ExtractToFiles()
+        public void ExtractToFiles(CancellationToken token)
         {
 
 
@@ -85,14 +87,19 @@ namespace VCF
                     string card = contact.ToString();
                     if (name != string.Empty && card.StartsWith("BEGIN"))
                     {
-                        OnWritingFile?.Invoke(++CardNumber, name);
+                        WritingFile?.Invoke(++CardNumber, name);
                         VCFValidator.WriteToFile(card, name, DestinationFolder);
                         contact.Clear();
+                        if (token.IsCancellationRequested)
+                        {
+                            Cancelled?.Invoke();
+                            throw new OperationCanceledException(token);
+                        }
                     }
 
                 }
             }
-            OnExtractDone?.Invoke(CardNumber, DestinationFolder);
+            ExtractDone?.Invoke(CardNumber, DestinationFolder);
         }
         /// <summary>
         /// Takes the FN line of a contact and returns the name of it.

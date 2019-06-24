@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ContactSplitMergeGUI"
         mc:Ignorable="d"
-        Title="Contact tool" Width="385" Height="450">
+        Title="Contact tool" Width="385" >
     <StackPanel Background="Azure">
         <StackPanel Margin="10" Orientation="Horizontal" HorizontalAlignment="Center">
             <RadioButton x:Name="spiltRadioBtn" VerticalAlignment="Center" Margin="5" Content="Split" GroupName="Option" 
@@ -41,5 +41,7 @@
         <Label x:Name="contactsFoundLbl" Margin="10,5" />
         <Label x:Name="statsLbl" Margin="10,5"/>
         <ProgressBar x:Name="progressBar" Minimum="0" Margin="10,5" Height="13"/>
+        <Button x:Name="btnCancel" Padding="5" Content="Cancel" Background="Pink" 
+                HorizontalAlignment="Center" Click="BtnCancel_Click"/>
     </StackPanel>
 </Window>
