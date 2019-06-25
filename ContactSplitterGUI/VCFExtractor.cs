@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading;
@@ -19,10 +20,11 @@ namespace VCF
             }
 
             SourceFile = locations.SourceFile; DestinationFolder = locations.DestinationFolder;
+
         }
         private string SourceFile { get; }
         private string DestinationFolder { get; }
-
+        private readonly List<string> files = new List<string>();
         private int totalCards;
         public int TotalCardsInSource
         {
@@ -88,10 +90,15 @@ namespace VCF
                     if (name != string.Empty && card.StartsWith("BEGIN"))
                     {
                         WritingFile?.Invoke(++CardNumber, name);
-                        VCFValidator.WriteToFile(card, name, DestinationFolder);
+                        
+                        files.Add(VCFTools.WriteToFile(card, name, DestinationFolder));
                         contact.Clear();
                         if (token.IsCancellationRequested)
                         {
+                            foreach (var item in files)
+                            {
+                                File.Delete(item);
+                            }
                             Cancelled?.Invoke();
                             throw new OperationCanceledException(token);
                         }
@@ -99,6 +106,7 @@ namespace VCF
 
                 }
             }
+            
             ExtractDone?.Invoke(CardNumber, DestinationFolder);
         }
         /// <summary>
