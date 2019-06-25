@@ -56,7 +56,6 @@ namespace VCF
                     if (token.IsCancellationRequested)
                     {
                         break;
-                        
                     }
 
                     string card = File.ReadAllText(path);
@@ -67,11 +66,10 @@ namespace VCF
             }
             if (token.IsCancellationRequested)
             {
-                FileInfo file = new FileInfo(DestinationFile);
-                file.Delete();
+                File.Delete(DestinationFile);
                 Cancelled?.Invoke();
                 throw new OperationCanceledException(token);
-            }else
+            }
             MergeDone?.Invoke(cardNumber, DestinationFile);
         }
 

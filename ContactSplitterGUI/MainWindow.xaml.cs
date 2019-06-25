@@ -131,7 +131,7 @@ namespace ContactSplitMergeGUI
                 tokenSource = new CancellationTokenSource();
                 btnCancel.Visibility = Visibility.Visible;
                 isRunning = true;
-                Task extractorTask = new Task((token)=>merger.MergeContacts((CancellationToken)token),tokenSource.Token);
+                Task extractorTask = new Task((token) => merger.MergeContacts((CancellationToken)token), tokenSource.Token);
                 extractorTask.Start();
 
 
@@ -225,15 +225,8 @@ namespace ContactSplitMergeGUI
 
         private void BtnCancel_Click(object sender, RoutedEventArgs e)
         {
-            
-            MessageBoxResult result = MessageBox.Show("This will cancel all running operationsAre you sure you want to cancel?", "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-            if (result == MessageBoxResult.Yes)
-            {
-
-                tokenSource.Cancel();
-                tokenSource.Dispose();
-            }
-
+            tokenSource.Cancel();
+            tokenSource.Dispose();
         }
         private void MainWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
@@ -246,8 +239,8 @@ namespace ContactSplitMergeGUI
                     e.Cancel = true;
                 }
             }
-            
-            
+
+
         }
     }
 }

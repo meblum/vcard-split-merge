@@ -90,25 +90,30 @@ namespace VCF
                     if (name != string.Empty && card.StartsWith("BEGIN"))
                     {
                         WritingFile?.Invoke(++CardNumber, name);
-                        
+
                         files.Add(VCFTools.WriteToFile(card, name, DestinationFolder));
                         contact.Clear();
                         if (token.IsCancellationRequested)
                         {
-                            foreach (var item in files)
-                            {
-                                File.Delete(item);
-                            }
-                            Cancelled?.Invoke();
-                            throw new OperationCanceledException(token);
+                            OnCancelled(token);
                         }
                     }
-
                 }
             }
-            
+
             ExtractDone?.Invoke(CardNumber, DestinationFolder);
         }
+
+        private void OnCancelled(CancellationToken token)
+        {
+            foreach (var item in files)
+            {
+                File.Delete(item);
+            }
+            Cancelled?.Invoke();
+            throw new OperationCanceledException(token);
+        }
+
         /// <summary>
         /// Takes the FN line of a contact and returns the name of it.
         /// If it does not have a name, "Unnamed" is returned.
