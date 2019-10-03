@@ -101,7 +101,8 @@ namespace VCF
 
             int duplicateCounter = 0;
 
-            string path = Path.Combine(dest, $"{name}.vcf");
+            string path = Path.Combine(dest, $"{RemoveInvalidChars(name)}.vcf");
+
 
             while (File.Exists(path))
             {
@@ -111,5 +112,11 @@ namespace VCF
             File.WriteAllText(path, contact);
             return path;
         }
+
+
+        public static string RemoveInvalidChars(string filename)
+        {
+         return string.Concat(filename.Split(Path.GetInvalidFileNameChars()));
+            }
     }
 }
