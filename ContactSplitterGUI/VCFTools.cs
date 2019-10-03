@@ -116,7 +116,7 @@ namespace VCF
 
         public static string RemoveInvalidChars(string filename)
         {
-         return string.Concat(filename.Split(Path.GetInvalidFileNameChars()));
-            }
+            return string.Concat(filename.Split(Path.GetInvalidFileNameChars()));
+        }
     }
 }
