@@ -8,7 +8,7 @@ namespace VCF
 {
     public class VCFExtractor
     {
-        public VCFExtractor(VCFExtractorLocations locations)
+        public VCFExtractor(VCFExtractorLocations locations, IProgress<VCFProgressData> progress = null)
         {
             if (locations.SourceFile == null)
             {
@@ -18,7 +18,7 @@ namespace VCF
             {
                 throw new InvalidDataException("Please supply a destination folder!");
             }
-
+            _progress = progress;
             SourceFile = locations.SourceFile; DestinationFolder = locations.DestinationFolder;
 
         }
@@ -26,6 +26,7 @@ namespace VCF
         private string DestinationFolder { get; }
         private readonly List<string> files = new List<string>();
         private int totalCards;
+        private IProgress<VCFProgressData> _progress;
         public int TotalCardsInSource
         {
             get
@@ -37,16 +38,13 @@ namespace VCF
                 return totalCards;
             }
         }
-        public event Action<int, string> WritingFile;
-        public event Action<int, string> ExtractDone;
-        public event Action Cancelled;
         public int CardNumber { get; private set; }
         /// <summary>
         /// Takes a file, reads each contact and writes it to a new file
         /// </summary>
         /// <param name="source">Source filr</param>
         /// <param name="dest">Destination directory</param>
-        public void ExtractToFiles(CancellationToken token)
+        public VCFProgressData ExtractToFiles(CancellationToken token)
         {
 
 
@@ -89,9 +87,10 @@ namespace VCF
                     string card = contact.ToString();
                     if (name != string.Empty && card.StartsWith("BEGIN"))
                     {
-                        WritingFile?.Invoke(++CardNumber, name);
 
-                        files.Add(VCFTools.WriteToFile(card, name, DestinationFolder));
+                        _progress?.Report(new VCFProgressData(++CardNumber, name));
+
+                        files.Add(VCFWriter.WriteToFile(card, name, DestinationFolder));
                         contact.Clear();
                         if (token.IsCancellationRequested)
                         {
@@ -101,7 +100,7 @@ namespace VCF
                 }
             }
 
-            ExtractDone?.Invoke(CardNumber, DestinationFolder);
+            return new VCFProgressData(CardNumber, DestinationFolder);
         }
 
         private void OnCancelled(CancellationToken token)
@@ -110,7 +109,6 @@ namespace VCF
             {
                 File.Delete(item);
             }
-            Cancelled?.Invoke();
             throw new OperationCanceledException(token);
         }
 

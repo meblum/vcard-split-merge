@@ -49,7 +49,7 @@ namespace ContactSplitMergeGUI
             }
         }
 
-        private void GoButton_Click(object sender, RoutedEventArgs e)
+        private async void GoButton_ClickAsync(object sender, RoutedEventArgs e)
         {
 
             if (spiltRadioBtn.IsChecked == true)
@@ -57,7 +57,11 @@ namespace ContactSplitMergeGUI
                 VCFExtractor extractor;
                 try
                 {
-                    extractor = new VCFExtractor(extractorLocations);
+                    extractor = new VCFExtractor(extractorLocations, new Progress<VCFProgressData>((progressData) =>
+                     {
+                         progressBar.Value = progressData.Number;
+                         statsLbl.Content = $"{progressData.Number} Extracting {progressData.Name}";
+                     }));
 
                 }
                 catch (InvalidDataException exception)
@@ -65,34 +69,37 @@ namespace ContactSplitMergeGUI
                     MessageBox.Show(exception.Message, "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
+
+
                 progressBar.Maximum = extractor.TotalCardsInSource;
                 contactsFoundLbl.Content = $"{extractor.TotalCardsInSource} Contacts found!";
 
-                extractor.WritingFile += (contactNumber, fileName) => Dispatcher.Invoke(() =>
-                {
-                    progressBar.Value = contactNumber;
-                    statsLbl.Content = $"{contactNumber} Extracting {fileName}";
-                });
-
-                extractor.ExtractDone += (totalContacts, outputLocation) => Dispatcher.Invoke(() =>
-                   {
-                       MessageBox.Show($"{totalContacts} contacts succesfully extracted to {outputLocation}", "Success!", MessageBoxButton.OK, MessageBoxImage.Information);
-                       Clear();
-                   });
 
 
-                extractor.Cancelled += () => Dispatcher.Invoke(() =>
-                  {
-                      MessageBox.Show("Extract cancelled!", "Cancelled!", MessageBoxButton.OK, MessageBoxImage.Information);
-                      Clear();
-                  });
+                
+
+
+
 
                 tokenSource = new CancellationTokenSource();
                 btnCancel.Visibility = Visibility.Visible;
                 isRunning = true;
-                Task extractorTask = new Task((token) => extractor.ExtractToFiles((CancellationToken)token), tokenSource.Token);
 
-                extractorTask.Start();
+                try
+                {
+                    var returnData = await Task.Run(() => extractor.ExtractToFiles(tokenSource.Token));
+
+                    MessageBox.Show($"{returnData.Number} contacts succesfully extracted to {returnData.Name}", "Success!", MessageBoxButton.OK, MessageBoxImage.Information);
+                    Clear();
+
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, "Cancelled!", MessageBoxButton.OK, MessageBoxImage.Information);
+                    Clear();
+                }
+
+
             }
 
             else if (mergeRadioBtn.IsChecked == true)
@@ -101,7 +108,11 @@ namespace ContactSplitMergeGUI
                 VCFMerger merger;
                 try
                 {
-                    merger = new VCFMerger(mergerLocations);
+                    merger = new VCFMerger(mergerLocations, new Progress<VCFProgressData>((progressData) =>
+                     {
+                         progressBar.Value = progressData.Number;
+                         statsLbl.Content = $"{progressData.Number} Merging {progressData.Name}";
+                     }));
                 }
 
                 catch (InvalidDataException g)
@@ -111,28 +122,30 @@ namespace ContactSplitMergeGUI
                 }
                 progressBar.Maximum = merger.TotalCards;
                 contactsFoundLbl.Content = $"{merger.TotalCards} contacts selected.";
-                merger.WritingContact += (contactNumber, fileName) => Dispatcher.Invoke(() =>
-                 {
-                     progressBar.Value = contactNumber;
-                     statsLbl.Content = $"{contactNumber} Merging {fileName}";
-                 });
-                merger.MergeDone += (totalContacts, outputLocation) => Dispatcher.Invoke(() =>
-                  {
-                      MessageBox.Show($"{totalContacts} contacts succesfully merged to {outputLocation}", "Success!", MessageBoxButton.OK, MessageBoxImage.Information);
-                      Clear();
-                  });
 
-                merger.Cancelled += () => Dispatcher.Invoke(() =>
-                {
-                    MessageBox.Show("Merge cancelled!", "Cancelled!", MessageBoxButton.OK, MessageBoxImage.Information);
-                    Clear();
-                });
+
+
+
+
+
 
                 tokenSource = new CancellationTokenSource();
                 btnCancel.Visibility = Visibility.Visible;
                 isRunning = true;
-                Task extractorTask = new Task((token) => merger.MergeContacts((CancellationToken)token), tokenSource.Token);
-                extractorTask.Start();
+
+                try
+                {
+                    var returnData = await Task.Run(() => merger.MergeContacts(tokenSource.Token));
+                    MessageBox.Show($"{returnData.Number} contacts succesfully merged to {returnData.Name}", "Success!", MessageBoxButton.OK, MessageBoxImage.Information);
+                    Clear();
+
+                }
+                catch (Exception exc)
+                {
+                    MessageBox.Show(exc.Message, "Cancelled!", MessageBoxButton.OK, MessageBoxImage.Information);
+                    Clear();
+                }
+
 
 
             }
