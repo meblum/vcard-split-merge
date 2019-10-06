@@ -10,7 +10,7 @@ namespace VCF
 {
     class VCFMerger
     {
-        public VCFMerger(VCFMergerLocations locations)
+        public VCFMerger(VCFMergerLocations locations, IProgress<VCFProgressData> progress = null)
         {
             if (locations.SourceFiles == null)
             {
@@ -20,18 +20,15 @@ namespace VCF
             {
                 throw new InvalidDataException("Please supply a destination file!");
             }
+            _prgress = progress;
             SourceFiles = locations.SourceFiles; DestinationFile = locations.DestinationFile;
         }
+
+        private IProgress<VCFProgressData> _prgress;
         private string[] SourceFiles { get; }
         private string DestinationFile { get; }
         public int TotalCards => SourceFiles.Length;
-        /// <summary>
-        /// Fires when a contact is written
-        /// </summary>
-        public event Action<int, string> WritingContact;
-        public event Action<int, string> MergeDone;
-        public event Action Cancelled;
-
+        
 
         /// <summary>
         /// Gets an array of name card paths, reads each file and appends it to the specified file.
@@ -41,7 +38,7 @@ namespace VCF
         /// </summary>
         /// <param name="sourcePaths">The array of paths</param>
         /// <param name="dest">The destination file</param>
-        public void MergeContacts(CancellationToken token)
+        public VCFProgressData MergeContacts(CancellationToken token)
         {
 
 
@@ -60,17 +57,17 @@ namespace VCF
 
                     string card = File.ReadAllText(path);
                     cardNumber++;
-                    WritingContact?.Invoke(cardNumber, Path.GetFileName(path));
+                    _prgress?.Report(new VCFProgressData(cardNumber, Path.GetFileName(path)));
                     writer.Write(card + Environment.NewLine);
                 }
             }
             if (token.IsCancellationRequested)
             {
                 File.Delete(DestinationFile);
-                Cancelled?.Invoke();
                 throw new OperationCanceledException(token);
             }
-            MergeDone?.Invoke(cardNumber, DestinationFile);
+
+            return new VCFProgressData(cardNumber, DestinationFile);
         }
 
     }
